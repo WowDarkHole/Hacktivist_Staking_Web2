@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import ReactQuill from 'react-quill';
 import Typewriter from 'typewriter-effect';
 import { Modal } from "react-responsive-modal";
+import TextTruncate from 'react-text-truncate';
+import { app, database } from './firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
 
 //Styles
 import styles from '../styles/Home.module.css';
@@ -12,10 +16,17 @@ import "react-responsive-modal/styles.css";
 import Logo from '../src/image/logo.png';
 import Robot_BG from '../src/image/robot.svg';
 import BG from '../src/image/bg.png'
-// import Pixel_BG from '../src/image/pixel_bg.svg';
+import firebase from "firebase";
+
 export default function Home() {
+
+  const firebaseApp = firebase.apps[0];
   const [toggle, setToggle] = useState(false);
   const [modalState, setModalState] = useState(false);
+
+  //Wallet Address
+  const [address, setAddress] = useState('Connect Wallet');
+
   const changeToggle = () => {
     setToggle(!toggle);
   }
@@ -26,12 +37,17 @@ export default function Home() {
     setModalState(false);
   }
 
+  useEffect = () => {
+    console.log(firebaseApp.option);
+  }
+
   const onConnectWallet = () => {
     if (window.ethereum) {
       window.ethereum.request({ method: 'eth_requestAccounts' })
         .then(res => {
           // Return the address of the wallet
-          console.log(res)
+          setAddress(res[0]);
+          console.log(res[0])
         })
     } else {
       alert("install metamask extension!!")
@@ -73,9 +89,8 @@ export default function Home() {
                 <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">FAQ</a>
               </li> */}
               <div className="z-50">
-                {/* <button type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-3 md:mr-0 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Connect Wallet</button> */}
                 <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => onConnectWallet()}>
-                  CONNECT WALLET
+                  <TextTruncate line={1} element="span" truncateText="..." text={address} />
                 </button>
                 <button data-collapse-toggle="mobile-menu-4" type="button" className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="mobile-menu-4" aria-expanded="false" onClick={() => changeToggle()}>
                   <span className="sr-only pixel-font">Open main menu</span>
