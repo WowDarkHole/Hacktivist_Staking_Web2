@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import ReactQuill from 'react-quill';
 import Typewriter from 'typewriter-effect';
 import { Modal } from "react-responsive-modal";
 import TextTruncate from 'react-text-truncate';
-import { app, database } from './firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
+import { checkHolder } from './checkTokenHolder';
+import { deposit, reverse, getDataAmount, check24hrs } from './wallet';
 
 //Styles
 import styles from '../styles/Home.module.css';
@@ -16,13 +15,14 @@ import "react-responsive-modal/styles.css";
 import Logo from '../src/image/logo.png';
 import Robot_BG from '../src/image/robot.svg';
 import BG from '../src/image/bg.png'
-import firebase from "firebase";
+import { Alert } from 'react-bootstrap';
 
 export default function Home() {
 
-  const firebaseApp = firebase.apps[0];
   const [toggle, setToggle] = useState(false);
   const [modalState, setModalState] = useState(false);
+  const [holdStatus, setHoldStatus] = useState(false);
+  const [holdNftAmount, setHoldNftAmount] = useState(0);
 
   //Wallet Address
   const [address, setAddress] = useState('Connect Wallet');
@@ -37,8 +37,12 @@ export default function Home() {
     setModalState(false);
   }
 
-  useEffect = () => {
-    console.log(firebaseApp.option);
+  const startStaking = () => {
+
+  }
+
+  const stopStaking = () => {
+
   }
 
   const onConnectWallet = () => {
@@ -47,11 +51,26 @@ export default function Home() {
         .then(res => {
           // Return the address of the wallet
           setAddress(res[0]);
+          if (checkHolder(res[0])) { // returns hold nft amount
+            setHoldStatus(true);
+            setHoldNftAmount(checkHolder(res[0]));
+          }
           console.log(res[0])
         })
     } else {
       alert("install metamask extension!!")
     }
+  }
+
+  const depositToWallet = () => {
+    check24hrs();
+    // getDataAmount(address);
+    // if (holdStatus) {
+    //   deposit(10, address);
+    // }
+    // else {
+    //   alert("You are not a token Holder!")
+    // }
   }
 
   return (
@@ -84,10 +103,13 @@ export default function Home() {
               </li>
               <li>
                 <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">TEAM</a>
-              </li>
-              <li>
-                <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">FAQ</a>
               </li> */}
+              {/* <li>
+                <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => { }}> Staking </button>
+              </li> */}
+              <li>
+                <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => depositToWallet()}> Get $Data </button>
+              </li>
               <div className="z-50">
                 <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => onConnectWallet()}>
                   <TextTruncate line={1} element="span" truncateText="..." text={address} />
@@ -105,6 +127,26 @@ export default function Home() {
       <div className="bg-black relative" >
         <Image src={BG}></Image>
       </div>
+      {/* <div className="absolute bg-white top-1/3 left-1/3" >
+        <div className="relative">
+          <div>
+            <span>Stake NFT Amount: </span>
+            <select>
+              {
+
+              }
+            </select>
+          </div>
+          <div>
+            <span>Staked Properties: </span>
+            <span> 2 NFTs from 01/05/2022 (40 days)</span>
+          </div>
+          <div>
+            <button>Start Staking</button>
+            <button>Stop Staking</button>
+          </div>
+        </div>
+      </div> */}
     </div >
   )
 }
