@@ -6,6 +6,8 @@ import { Modal } from "react-responsive-modal";
 import TextTruncate from 'react-text-truncate';
 import { checkHolder } from './checkTokenHolder';
 import { deposit, reverse, getDataAmount, check24hrs } from './wallet';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 //Styles
 import styles from '../styles/Home.module.css';
@@ -27,6 +29,30 @@ export default function Home() {
   //Wallet Address
   const [address, setAddress] = useState('Connect Wallet');
 
+  const notifyUnAvailable = (message) => {
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  }
+
+  const notifySucceed = (message) => {
+    toast.success(message, {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  }
+
   const changeToggle = () => {
     setToggle(!toggle);
   }
@@ -35,14 +61,6 @@ export default function Home() {
   }
   const closeModal = () => {
     setModalState(false);
-  }
-
-  const startStaking = () => {
-
-  }
-
-  const stopStaking = () => {
-
   }
 
   const onConnectWallet = () => {
@@ -62,15 +80,37 @@ export default function Home() {
     }
   }
 
-  const depositToWallet = () => {
-    check24hrs();
-    // getDataAmount(address);
-    // if (holdStatus) {
-    //   deposit(10, address);
-    // }
-    // else {
-    //   alert("You are not a token Holder!")
-    // }
+  const depositToWallet = async () => {
+    if (holdStatus) {
+      const checkDaily = new Promise(async (resolve) => resolve(await check24hrs(address)));
+
+      toast.promise(
+        checkDaily,
+        {
+          pending: 'Checking daily reward status.',
+          error: 'Sorry! You already get the daily reward! 🤯'
+        }
+      )
+      checkDaily.then((data) => {
+        if (data) {
+          const depositCheck = new Promise(async (resolve) => resolve(await deposit(10, address)));
+
+          toast.promise(
+            depositCheck,
+            {
+              pending: 'Deposit $Data is pending',
+              success: '🦄 You get the daily reward! 👌',
+              error: 'Deposit rejected because of some reason 🤯'
+            }
+          )
+        }
+        else
+          notifyUnAvailable('🦄 Sorry! You already get the daily reward!');
+      });
+    }
+    else {
+      notifyUnAvailable("Sorry! You are not a token Holder!")
+    }
   }
 
   return (
@@ -127,6 +167,30 @@ export default function Home() {
       <div className="bg-black relative" >
         <Image src={BG}></Image>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme='colored'
+      />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme='colored'
+      />
       {/* <div className="absolute bg-white top-1/3 left-1/3" >
         <div className="relative">
           <div>

@@ -1,10 +1,7 @@
 import { app, database } from './firebaseConfig';
 import { doc, collection, addDoc, getDoc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
-import { useState, useEffect } from 'react';
 
 const dbInstance = collection(database, 'transactions');
-
-// const [notesArray, setNotesArray] = useState([]);
 
 const alreadyAdded = async (address) => {
   console.log("yeap:", address);
@@ -21,21 +18,26 @@ const alreadyAdded = async (address) => {
   return added;
 }
 
+// check once reward per day
 export const check24hrs = async (address) => {
   const current = new Date();
+  let flg = true;
   await getDocs(dbInstance)
     .then((data) => {
       data.docs.map((item) => {
         if (item.data().address == address) {
-          if (address.lastDate == current.getDate()) {
-
+          if (item.data().lastDate == current.getDate()) {
+            flg = false;
+            console.log("Already Deposited!")
           }
         }
       })
     });
-  console.log(current.getDate());
+
+  return flg;
 }
 
+// get firebase DocId from address
 const addressToDocId = async (address) => {
   let docId = "";
   await getDocs(dbInstance)
@@ -49,6 +51,7 @@ const addressToDocId = async (address) => {
   return docId;
 }
 
+// get firebase native token amount from address
 export const getDataAmount = async (address) => {
   let addressToAmount = 0;
   await getDocs(dbInstance)
@@ -62,14 +65,13 @@ export const getDataAmount = async (address) => {
   return addressToAmount;
 }
 
+// add daily amount to address
 export const deposit = async (amount, address) => {
   // let val = getDataAmount(address) + amount;
 
   if (await alreadyAdded(address)) {
     const docId = await addressToDocId(address);
     const preAmount = await getDataAmount(address);
-    console.log("Docid: ", docId);
-    console.log("preAmount: ", preAmount);
     updateDataAmount(docId, preAmount + amount, address);
   }
   else {
@@ -81,6 +83,7 @@ export const deposit = async (amount, address) => {
   console.log("You get 10 $Data to your wallet!")
 }
 
+// update firebase data amount
 export const updateDataAmount = (docId, amount, address) => {
   const collectionById = doc(database, 'transactions', docId)
 
