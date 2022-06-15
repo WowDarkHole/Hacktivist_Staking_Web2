@@ -21,7 +21,7 @@ export default function Home() {
 
   const [toggle, setToggle] = useState(false);
   const [metamask, setMetamask] = useState(false);
-  const [holdNftAmount, setHoldNftAmount] = useState(0);
+  const [dataAmount, setDataAmount] = useState(0);
 
   //Wallet Address
   const [address, setAddress] = useState('Connect Wallet');
@@ -42,18 +42,22 @@ export default function Home() {
     setToggle(!toggle);
   }
 
-  const onConnectWallet = () => {
+  const onConnectWallet = async () => {
+    let addressBump = '';
     if (window.ethereum) {
-      window.ethereum.request({ method: 'eth_requestAccounts' })
+      await window.ethereum.request({ method: 'eth_requestAccounts' })
         .then(res => {
           // Return the address of the wallet
           setMetamask(true);
           setAddress(res[0]);
-          console.log(res[0])
+          addressBump = res[0]
         })
     } else {
       notifyUnAvailable('Please install Metamask!')
     }
+
+    const dataM = await getDataAmount('0x658137f5C91804D5C5F984cf8C4803a8b42caA18');
+    setDataAmount(dataM);
   }
 
   const depositToWallet = async () => {
@@ -61,25 +65,20 @@ export default function Home() {
       const id = toast.loading("Please wait...")
       const holdTokens = await getHolders(address);
       let tokenAmount = 0;
-      for (let i = 0; i < holdTokens.length; i++) {
-        console.log("III:", parseInt(holdTokens[i]))
-        if (parseInt(holdTokens[i]) == 292) {
-          tokenAmount = 1;
-        }
-      }
+      tokenAmount = holdTokens.length;
       console.log("TokenAmount:", tokenAmount)
       if (tokenAmount) {
 
         const checkDaily = await check24hrs(address);
         if (!checkDaily) {
-          await deposit(10, address);
+          setDataAmount(await deposit(10 * tokenAmount, address));
           toast.update(id, { render: "🦄 Wow! You get the daily reward!", type: "success", isLoading: false, closeOnClick: true, draggable: true, autoClose: 3000 });
         }
         else
           toast.update(id, { render: "🦄 Sorry! You already get the daily reward or You're not connected to network!", type: "error", isLoading: false, closeOnClick: true, draggable: true, autoClose: 3000 });
       }
       else {
-        notifyUnAvailable("Sorry! You are not a token Holder!")
+        toast.update(id, { render: "🦄 Sorry! You are not a token Holder!", type: "error", isLoading: false, closeOnClick: true, draggable: true, autoClose: 3000 });
       }
     }
     else {
@@ -96,17 +95,18 @@ export default function Home() {
       <nav className="border-gray-200 rounded dark:bg-gray-800 bg-transparent sticky z-20" role="navigation">
         <div className="flex flex-wrap justify-between lg:justify-around items-center mx-auto bg-[#151515]">
           <a href="#" className="flex">
-            <div className="text-5xl font-bold text-[#003949]">
+            <div className="text-5xl font-bold text-[#003949] mx-32">
               <Image src={Logo} className="w-auto" width={50} height={50} />
             </div>
           </a>
-          <div>
+          <div className="mx-3">
             <span className="text-white text-4xl font-black">HACKTIVIST</span>
           </div>
-          <div className={`${toggle ? '' : 'hidden'} justify-between items-center w-full md:flex md:w-auto md:order-1`} id="mobile-menu-4">
+          <div className={`${toggle ? '' : 'hidden'} justify-between items-center w-full md:flex md:w-auto md:order-1 mx-9`} id="mobile-menu-4">
             <ul className="flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 sm:text-xl md:text-xl lg:text-2xl items-center">
+
               <li>
-                <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => depositToWallet()}> Get $Data </button>
+                <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => depositToWallet()}> Staking </button>
               </li>
               <div className="z-50">
                 <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => onConnectWallet()}>
@@ -118,6 +118,10 @@ export default function Home() {
                   <svg className="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
                 </button>
               </div>
+              <li className="text-white text-sm">
+                <span>{dataAmount} </span>
+                <span>$Data</span>
+              </li>
             </ul>
           </div>
         </div>

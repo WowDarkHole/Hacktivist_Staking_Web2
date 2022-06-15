@@ -49,25 +49,19 @@ const addressToDocId = async (address) => {
 }
 
 // get firebase native token amount from address
-export const getDataAmount = async (address) => {
-  let addressToAmount = 0;
+export const getDataAmount = async (address) =>
   await getDocs(dbInstance)
-    .then((data) => {
-      console.log(data.docs.map((item) => {
-        if (item.data().address == address) {
-          addressToAmount = item.data().data;
-        }
-      }));
-    })
-  return addressToAmount;
-}
+    .then((data) => data.docs.find((item) => item.data().address == address)?.data()?.data || 0);
 
 // add daily amount to address
 export const deposit = async (amount, address) => {
+
+  const current = new Date();
   if (await alreadyAdded(address)) {
     const docId = await addressToDocId(address);
     const preAmount = await getDataAmount(address);
     updateDataAmount(docId, preAmount + amount, address);
+    return preAmount + amount;
   }
   else {
     addDoc(dbInstance, {
@@ -75,8 +69,8 @@ export const deposit = async (amount, address) => {
       address: address,
       lastDate: current.getDate()
     })
+    return amount;
   }
-  console.log("You get $Data to your wallet!")
 }
 
 // update firebase data amount
