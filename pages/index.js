@@ -4,26 +4,23 @@ import Image from 'next/image';
 import Typewriter from 'typewriter-effect';
 import { Modal } from "react-responsive-modal";
 import TextTruncate from 'react-text-truncate';
-import { checkHolder } from './checkTokenHolder';
 import { deposit, reverse, getDataAmount, check24hrs } from './wallet';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getHolders } from './web3';
 
 //Styles
 import styles from '../styles/Home.module.css';
 import "react-responsive-modal/styles.css";
 
 //Resources
-import Logo from '../src/image/logo.png';
-import Robot_BG from '../src/image/robot.svg';
-import BG from '../src/image/bg.png'
-import { Alert } from 'react-bootstrap';
+import Logo from '../src/img/logo.png';
+import BG from '../src/img/bg.png'
 
 export default function Home() {
 
   const [toggle, setToggle] = useState(false);
-  const [modalState, setModalState] = useState(false);
-  const [holdStatus, setHoldStatus] = useState(false);
+  const [metamask, setMetamask] = useState(false);
   const [holdNftAmount, setHoldNftAmount] = useState(0);
 
   //Wallet Address
@@ -32,19 +29,7 @@ export default function Home() {
   const notifyUnAvailable = (message) => {
     toast.error(message, {
       position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  }
-
-  const notifySucceed = (message) => {
-    toast.success(message, {
-      position: "top-right",
-      autoClose: 5000,
+      autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
@@ -56,78 +41,63 @@ export default function Home() {
   const changeToggle = () => {
     setToggle(!toggle);
   }
-  const setModal = () => {
-    setModalState(true);
-  }
-  const closeModal = () => {
-    setModalState(false);
-  }
 
   const onConnectWallet = () => {
     if (window.ethereum) {
       window.ethereum.request({ method: 'eth_requestAccounts' })
         .then(res => {
           // Return the address of the wallet
+          setMetamask(true);
           setAddress(res[0]);
-          if (checkHolder(res[0])) { // returns hold nft amount
-            setHoldStatus(true);
-            setHoldNftAmount(checkHolder(res[0]));
-          }
           console.log(res[0])
         })
     } else {
-      alert("install metamask extension!!")
+      notifyUnAvailable('Please install Metamask!')
     }
   }
 
   const depositToWallet = async () => {
-    if (holdStatus) {
-      const checkDaily = new Promise(async (resolve) => resolve(await check24hrs(address)));
-
-      toast.promise(
-        checkDaily,
-        {
-          pending: 'Checking daily reward status.',
-          error: 'Sorry! You already get the daily reward! 🤯'
+    if (metamask) {
+      const id = toast.loading("Please wait...")
+      const holdTokens = await getHolders(address);
+      let tokenAmount = 0;
+      for (let i = 0; i < holdTokens.length; i++) {
+        console.log("III:", parseInt(holdTokens[i]))
+        if (parseInt(holdTokens[i]) == 292) {
+          tokenAmount = 1;
         }
-      )
-      checkDaily.then((data) => {
-        if (data) {
-          const depositCheck = new Promise(async (resolve) => resolve(await deposit(10, address)));
+      }
+      console.log("TokenAmount:", tokenAmount)
+      if (tokenAmount) {
 
-          toast.promise(
-            depositCheck,
-            {
-              pending: 'Deposit $Data is pending',
-              success: '🦄 You get the daily reward! 👌',
-              error: 'Deposit rejected because of some reason 🤯'
-            }
-          )
+        const checkDaily = await check24hrs(address);
+        if (!checkDaily) {
+          await deposit(10, address);
+          toast.update(id, { render: "🦄 Wow! You get the daily reward!", type: "success", isLoading: false, closeOnClick: true, draggable: true, autoClose: 3000 });
         }
         else
-          notifyUnAvailable('🦄 Sorry! You already get the daily reward!');
-      });
+          toast.update(id, { render: "🦄 Sorry! You already get the daily reward or You're not connected to network!", type: "error", isLoading: false, closeOnClick: true, draggable: true, autoClose: 3000 });
+      }
+      else {
+        notifyUnAvailable("Sorry! You are not a token Holder!")
+      }
     }
     else {
-      notifyUnAvailable("Sorry! You are not a token Holder!")
+      notifyUnAvailable('Please connect your Metamask!')
     }
+
   }
 
   return (
-    <div className="mx-auto relative">
+    <div className="mx-auto relative bg-[url('/img/bg.png')] bg-auto bg-cover bg-black overflow-hidden" >
       <Head>
         <title>METASCALE</title>
-        {/* <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin />
-        <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" /> */}
       </Head>
       <nav className="border-gray-200 rounded dark:bg-gray-800 bg-transparent sticky z-20" role="navigation">
-        {/* <div className="bg-[#003949] h-16"></div> */}
         <div className="flex flex-wrap justify-between lg:justify-around items-center mx-auto bg-[#151515]">
           <a href="#" className="flex">
             <div className="text-5xl font-bold text-[#003949]">
               <Image src={Logo} className="w-auto" width={50} height={50} />
-              {/* <span>METASCALE</span> */}
             </div>
           </a>
           <div>
@@ -135,18 +105,6 @@ export default function Home() {
           </div>
           <div className={`${toggle ? '' : 'hidden'} justify-between items-center w-full md:flex md:w-auto md:order-1`} id="mobile-menu-4">
             <ul className="flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 sm:text-xl md:text-xl lg:text-2xl items-center">
-              {/* <li>
-                <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent  hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">HOME</a>
-              </li>
-              <li>
-                <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">ROADMAP</a>
-              </li>
-              <li>
-                <a href="#" className="block py-2 text-white bg-[#2aad92] rounded md:bg-transparent hover:text-[#2aad92] active:text-[#2aad92] focus:text-[#2aad92] md:p-0 dark:text-white pixel-font" aria-current="page">TEAM</a>
-              </li> */}
-              {/* <li>
-                <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => { }}> Staking </button>
-              </li> */}
               <li>
                 <button className="bg-[#003949] hover:bg-blue-700 text-white py-1 px-2 rounded-full text-base" onClick={() => depositToWallet()}> Get $Data </button>
               </li>
@@ -164,8 +122,11 @@ export default function Home() {
           </div>
         </div>
       </nav >
-      <div className="bg-black relative" >
+      {/* <div className="bg-fixed" >
         <Image src={BG}></Image>
+      </div> */}
+      <div className="h-screen w-screen">
+
       </div>
       <ToastContainer
         position="top-right"
@@ -179,38 +140,6 @@ export default function Home() {
         pauseOnHover
         theme='colored'
       />
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme='colored'
-      />
-      {/* <div className="absolute bg-white top-1/3 left-1/3" >
-        <div className="relative">
-          <div>
-            <span>Stake NFT Amount: </span>
-            <select>
-              {
-
-              }
-            </select>
-          </div>
-          <div>
-            <span>Staked Properties: </span>
-            <span> 2 NFTs from 01/05/2022 (40 days)</span>
-          </div>
-          <div>
-            <button>Start Staking</button>
-            <button>Stop Staking</button>
-          </div>
-        </div>
-      </div> */}
     </div >
   )
 }
