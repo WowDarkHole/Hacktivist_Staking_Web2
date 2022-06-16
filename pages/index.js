@@ -4,10 +4,10 @@ import Image from 'next/image';
 import Typewriter from 'typewriter-effect';
 import { Modal } from "react-responsive-modal";
 import TextTruncate from 'react-text-truncate';
-import { deposit, reverse, getDataAmount, check24hrs } from './wallet';
+import { deposit, reverse, getDataAmount, check24hrs } from '../firebase/wallet';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getHolders } from './web3';
+import { getHolders } from '../firebase/web3';
 
 //Styles
 import styles from '../styles/Home.module.css';
